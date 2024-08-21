@@ -809,6 +809,7 @@ void SVFIR2AbsState::handleCmp(AbstractState& as, const CmpStmt *cmp)
 
 void SVFIR2AbsState::handleLoad(AbstractState& as, const LoadStmt *load)
 {
+    nullptrDereferenceDetection(as, load);
     u32_t rhs = load->getRHSVarID();
     u32_t lhs = load->getLHSVarID();
     AbstractValue &addrs = as[rhs];
@@ -817,6 +818,19 @@ void SVFIR2AbsState::handleLoad(AbstractState& as, const LoadStmt *load)
     for (const auto &addr: addrs.getAddrs())
         rhsVal.join_with(as.load(addr));
     as[lhs] = rhsVal;
+}
+
+void SVFIR2AbsState::nullptrDereferenceDetection(AbstractState& as, const SVFStmt *stmt) {
+    if (const LoadStmt* load = SVFUtil::dyn_cast<LoadStmt>(stmt)) {
+        u32_t rhs = load->getRHSVarID();
+        AbstractValue &addrs = as[rhs];
+        for (const auto &addr: addrs.getAddrs()) {
+            AbstractValue v = as.load(addr);
+            if (v.getInterval().isBottom() && v.getAddrs().isBottom()) {
+                std::cout << "NULL POINTER DEREFERENCING DETECTED @ " << load->toString() << std::endl;
+            }
+        }
+    }
 }
 
 void SVFIR2AbsState::handleStore(AbstractState& as, const StoreStmt *store)

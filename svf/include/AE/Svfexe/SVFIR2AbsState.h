@@ -150,6 +150,8 @@ public:
 
     void handleLoad(AbstractState& es, const LoadStmt *load);
 
+    void nullptrDereferenceDetection(AbstractState& as, const SVFStmt* stmt);
+
     void handleStore(AbstractState& es, const StoreStmt *store);
 
     void handleCopy(AbstractState& es, const CopyStmt *copy);
